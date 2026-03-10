@@ -2,7 +2,7 @@ name: ESMA Monitor
 
 on:
   schedule:
-    - cron: "36 16 * * *"
+    - cron: "38 15 * * *"
   workflow_dispatch:
 
 permissions:
