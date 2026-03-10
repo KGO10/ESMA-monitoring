@@ -1,0 +1,46 @@
+name: ESMA Monitor
+
+on:
+  schedule:
+    - cron: "18 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  run-monitor:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run monitor
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
+          JIRA_ISSUE_TYPE: ${{ secrets.JIRA_ISSUE_TYPE }}
+          JIRA_BEARER_TOKEN: ${{ secrets.JIRA_BEARER_TOKEN }}
+          JIRA_USER: ${{ secrets.JIRA_USER }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_FIELD_KEY_MAP: ${{ secrets.JIRA_FIELD_KEY_MAP }}
+          JIRA_OPTION_ID_MAP: ${{ secrets.JIRA_OPTION_ID_MAP }}
+          JIRA_AUTO_COMMENT: ${{ secrets.JIRA_AUTO_COMMENT }}
+        run: python esma_monitor.py
+
+      - name: Commit updated snapshots
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add history/*.xlsx esma_register_eltif_art33_ELTIFRG_latest.xlsx || true
+          git diff --staged --quiet || git commit -m "chore: update ESMA snapshots"
+          git push
